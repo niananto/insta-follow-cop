@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "mcp__141ba5ff-0c9f-4f12-b709-7bc232ebec56__list_projects",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
