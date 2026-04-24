@@ -10,7 +10,7 @@ import { DrivePickerButton } from "@/components/DrivePickerButton";
 import { Button } from "@/components/ui/Button";
 
 export default function UploadPage() {
-  const { state, result, error, savedId, processFiles, saveResult, reset } =
+  const { state, result, error, savedId, processFiles, processFromDrive, saveResult, reset } =
     useFileProcessor();
 
   const handleFiles = useCallback(
@@ -21,12 +21,10 @@ export default function UploadPage() {
   );
 
   const handleDriveFile = useCallback(
-    (file: File) => {
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      processFiles(dt.files);
+    (data: { followers: import("@/lib/instagram/types").IGUser[]; following: import("@/lib/instagram/types").IGUser[] }) => {
+      processFromDrive(data);
     },
-    [processFiles]
+    [processFromDrive]
   );
 
   const handleSave = useCallback(async () => {
@@ -86,7 +84,7 @@ export default function UploadPage() {
             </div>
 
             <div className="flex justify-center">
-              <DrivePickerButton onFile={handleDriveFile} />
+              <DrivePickerButton onParsed={handleDriveFile} />
             </div>
           </div>
         )}

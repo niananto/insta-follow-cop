@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { pickInstagramZipFromDrive } from "@/lib/drive/picker";
+import { pickInstagramFolderFromDrive } from "@/lib/drive/picker";
+import type { IGUser } from "@/lib/instagram/types";
 import { Spinner } from "./ui/Spinner";
 
 interface DrivePickerButtonProps {
-  onFile: (file: File) => void;
+  onParsed: (data: { followers: IGUser[]; following: IGUser[] }) => void;
 }
 
-export function DrivePickerButton({ onFile }: DrivePickerButtonProps) {
+export function DrivePickerButton({ onParsed }: DrivePickerButtonProps) {
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -20,9 +21,9 @@ export function DrivePickerButton({ onFile }: DrivePickerButtonProps) {
     setError(null);
     setState("loading");
     try {
-      const file = await pickInstagramZipFromDrive();
+      const data = await pickInstagramFolderFromDrive();
       setState("idle");
-      onFile(file);
+      onParsed(data);
     } catch (err) {
       if (err instanceof Error && err.message === "cancelled") {
         setState("idle");
@@ -65,7 +66,7 @@ export function DrivePickerButton({ onFile }: DrivePickerButtonProps) {
         ) : (
           <DriveIcon />
         )}
-        {state === "loading" ? "Opening Drive…" : "Import from Google Drive"}
+        {state === "loading" ? "Reading Drive folder…" : "Import from Google Drive"}
       </button>
       {error && <p className="text-xs text-red-400 text-center">{error}</p>}
     </div>
