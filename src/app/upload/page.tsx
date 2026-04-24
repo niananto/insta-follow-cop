@@ -20,6 +20,15 @@ export default function UploadPage() {
     [processFiles]
   );
 
+  const handleDriveFile = useCallback(
+    (file: File) => {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      processFiles(dt.files);
+    },
+    [processFiles]
+  );
+
   const handleSave = useCallback(async () => {
     await saveResult();
     if (savedId) {
@@ -77,7 +86,7 @@ export default function UploadPage() {
             </div>
 
             <div className="flex justify-center">
-              <DrivePickerButton />
+              <DrivePickerButton onFile={handleDriveFile} />
             </div>
           </div>
         )}
