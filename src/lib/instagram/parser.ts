@@ -22,7 +22,7 @@ export function parseInstagramFile(raw: unknown): IGUser[] {
       const data = entry?.string_list_data?.[0];
 
       // Username: prefer string_list_data[0].value, fall back to entry.title
-      const username = data?.value || (entry as Record<string, unknown>).title as string;
+      const username = data?.value || (entry as unknown as Record<string, unknown>).title as string;
       if (!username) continue;
 
       // href from Instagram sometimes uses /_u/username — normalise to clean profile URL
