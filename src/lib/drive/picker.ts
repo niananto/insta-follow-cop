@@ -100,15 +100,13 @@ interface DriveFile {
   name: string;
 }
 
-// Search for JSON files inside the selected folder (and all subfolders)
-async function findJsonFilesInFolder(
+// List direct children of a folder (Drive API v3 only supports `in parents`, not `in ancestors`)
+async function listChildren(
   folderId: string,
   accessToken: string
 ): Promise<DriveFile[]> {
-  // Find all non-trashed files inside the folder (and subfolders).
-  // No MIME type filter — Drive often tags JSON as text/plain. Filter by name client-side.
   const query = encodeURIComponent(
-    `'${folderId}' in ancestors and trashed = false`
+    `'${folderId}' in parents and trashed = false`
   );
   const res = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)&pageSize=100`,
@@ -120,7 +118,48 @@ async function findJsonFilesInFolder(
     throw new Error(`Drive API error (${res.status}): ${msg}`);
   }
   const data = await res.json();
-  return data.files as DriveFile[];
+  return (data.files ?? []) as DriveFile[];
+}
+
+// Walk the known folder structure to find the JSON files.
+// Tries multiple entry points in case user picked a parent/child folder.
+async function findJsonFilesInFolder(
+  folderId: string,
+  accessToken: string
+): Promise<DriveFile[]> {
+  // Check if JSON files are directly in the selected folder
+  const direct = await listChildren(folderId, accessToken);
+  const directJson = direct.filter((f) =>
+    /^followers_\d+\.json$|^following\.json$/i.test(f.name)
+  );
+  if (directJson.length > 0) return directJson;
+
+  // Go one level deeper looking for 'connections' or 'followers_and_following'
+  for (const child of direct) {
+    if (
+      child.name === "connections" ||
+      child.name === "followers_and_following"
+    ) {
+      const level2 = await listChildren(child.id, accessToken);
+
+      // If this is 'connections', look for 'followers_and_following' inside it
+      const faf = level2.find((f) => f.name === "followers_and_following");
+      if (faf) {
+        const level3 = await listChildren(faf.id, accessToken);
+        return level3.filter((f) =>
+          /^followers_\d+\.json$|^following\.json$/i.test(f.name)
+        );
+      }
+
+      // If this IS 'followers_and_following', return its JSON files
+      const jsonFiles = level2.filter((f) =>
+        /^followers_\d+\.json$|^following\.json$/i.test(f.name)
+      );
+      if (jsonFiles.length > 0) return jsonFiles;
+    }
+  }
+
+  return [];
 }
 
 async function downloadJsonFile(
