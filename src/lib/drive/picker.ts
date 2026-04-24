@@ -60,16 +60,29 @@ function openFolderPicker(
   apiKey: string
 ): Promise<google.picker.DocumentObject> {
   return new Promise((resolve, reject) => {
-    const folderView = new window.google.picker.DocsView()
-      .setSelectFolderEnabled(true)
-      .setMimeTypes("application/vnd.google-apps.folder")
-      .setIncludeFolders(true);
+    const makeFolderView = () =>
+      new window.google.picker.DocsView()
+        .setSelectFolderEnabled(true)
+        .setMimeTypes("application/vnd.google-apps.folder")
+        .setIncludeFolders(true);
 
     const picker = new window.google.picker.PickerBuilder()
       .setOAuthToken(accessToken)
       .setDeveloperKey(apiKey)
-      .setTitle('Select your "instagram-username-date" folder from Drive')
-      .addView(folderView)
+      .setTitle('Select your "instagram-username-date" folder')
+      .addView(makeFolderView())                                          // My Drive
+      .addView(makeFolderView().setEnableDrives(true))                    // Shared drives
+      .addView(
+        new window.google.picker.DocsView(window.google.picker.ViewId.FOLDERS)
+          .setSelectFolderEnabled(true)
+          .setIncludeFolders(true)
+          .setOwnedByMe(false)                                            // Shared with me
+      )
+      .addView(
+        new window.google.picker.DocsView(window.google.picker.ViewId.RECENTLY_PICKED)
+          .setSelectFolderEnabled(true)
+          .setIncludeFolders(true)
+      )                                                                   // Recent
       .setCallback((data) => {
         if (data.action === window.google.picker.Action.PICKED) {
           resolve(data.docs![0]);
@@ -100,7 +113,11 @@ async function findJsonFilesInFolder(
     `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)&pageSize=50`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
-  if (!res.ok) throw new Error(`Drive API error: ${res.statusText}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg = body?.error?.message || body?.error || res.status;
+    throw new Error(`Drive API error (${res.status}): ${msg}`);
+  }
   const data = await res.json();
   return data.files as DriveFile[];
 }
