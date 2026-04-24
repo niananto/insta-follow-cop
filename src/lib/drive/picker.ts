@@ -105,12 +105,13 @@ async function findJsonFilesInFolder(
   folderId: string,
   accessToken: string
 ): Promise<DriveFile[]> {
-  // Drive API: find all JSON files whose ancestors include the selected folder
+  // Find all non-trashed files inside the folder (and subfolders).
+  // No MIME type filter — Drive often tags JSON as text/plain. Filter by name client-side.
   const query = encodeURIComponent(
-    `'${folderId}' in ancestors and mimeType = 'application/json' and trashed = false`
+    `'${folderId}' in ancestors and trashed = false`
   );
   const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)&pageSize=50`,
+    `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)&pageSize=100`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   if (!res.ok) {
