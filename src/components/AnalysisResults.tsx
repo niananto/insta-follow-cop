@@ -10,6 +10,7 @@ import { Button } from "./ui/Button";
 interface AnalysisResultsProps {
   result: AnalysisResult;
   onSave?: () => void;
+  onSignIn?: () => void;
   savedId?: string | null;
   isSaving?: boolean;
   saveError?: string | null;
@@ -20,6 +21,7 @@ type Tab = "notFollowingBack" | "notFollowedBack" | "summary";
 export function AnalysisResults({
   result,
   onSave,
+  onSignIn,
   savedId,
   isSaving,
   saveError,
@@ -62,7 +64,21 @@ export function AnalysisResults({
         {onSave && (
           <div className="flex items-center gap-3">
             {saveError && (
-              <p className="text-sm text-red-400">{saveError}</p>
+              <p className="text-sm text-red-400">
+                {saveError === "Sign in to save your results." && onSignIn ? (
+                  <>
+                    <button
+                      onClick={onSignIn}
+                      className="underline hover:text-red-300 transition-colors font-medium"
+                    >
+                      Sign in
+                    </button>
+                    {" to save your results."}
+                  </>
+                ) : (
+                  saveError
+                )}
+              </p>
             )}
             {savedId ? (
               <Badge variant="green">✓ Saved</Badge>

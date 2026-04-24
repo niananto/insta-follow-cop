@@ -7,10 +7,11 @@ import { useFileProcessor } from "@/hooks/useFileProcessor";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { AnalysisResults } from "@/components/AnalysisResults";
 import { DrivePickerButton } from "@/components/DrivePickerButton";
+import { DriveInstructions } from "@/components/DriveInstructions";
 import { Button } from "@/components/ui/Button";
 
 export default function UploadPage() {
-  const { state, result, error, savedId, processFiles, processFromDrive, saveResult, reset } =
+  const { state, result, error, savedId, processFiles, processFromDrive, saveResult, signInAndSave, reset } =
     useFileProcessor();
 
   const handleFiles = useCallback(
@@ -83,8 +84,9 @@ export default function UploadPage() {
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-3">
               <DrivePickerButton onParsed={handleDriveFile} />
+              <DriveInstructions />
             </div>
           </div>
         )}
@@ -95,6 +97,7 @@ export default function UploadPage() {
             <AnalysisResults
               result={result}
               onSave={handleSave}
+              onSignIn={signInAndSave}
               savedId={savedId}
               isSaving={state === "saving"}
               saveError={error ?? undefined}
